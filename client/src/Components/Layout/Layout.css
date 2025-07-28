@@ -1,0 +1,35 @@
+.Nav-bar {
+  display: flex;
+  column-gap: 30px;
+}
+
+.Nav-bar a {
+  color: #0d0d0d;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+.Nav-bar a:hover {
+  color: #2280b8;
+}
+
+.Nav-bar a.active {
+  color: #2280b8;
+}
+
+.emp-content {
+  padding: 20px;
+}
+
+.emp-content h4 {
+  font-size: 20px;
+}
+
+.emp-content .emp-name {
+  color: #002b56;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
