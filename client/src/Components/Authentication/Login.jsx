@@ -123,17 +123,23 @@ function Login() {
               },
             }}
           />
-          <a href="" style={{ fontSize: "12px" }}>
+          <Link to="/resetpswd" style={{ fontSize: "12px" }}>
             Forgot password
-          </a>
+          </Link>
           <div className="d-flex justify-content-end  my-2">
             <Button
               variant="contained"
               type="submit"
               style={{ backgroundColor: "green", color: "#f6f6f6" }}
-              loading={loading ? true : false}
+              disabled={loading ? true : false}
             >
-              Login
+              {loading ? (
+                <>
+                  <span className="spinner" />
+                </>
+              ) : (
+                "Login"
+              )}
             </Button>
           </div>
         </form>

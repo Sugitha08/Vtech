@@ -35,26 +35,29 @@ function ProgressTracker() {
     dispatch(EmpProgressThunk(filterDate));
   }, [filterDate]);
 
-  const [searchinputValue, setSearchInputValue] = useState("");
-  const [searchOptions, setSearchOptions] = useState([]);
-
-  const handleSearchInputChange = (event, value) => {
-    setSearchInputValue(value);
-
-    // Show options only after typing 2 or more characters
-    if (value.length >= 2) {
-      const filtered = employeeData.filter((option) =>
-        option.toLowerCase().includes(value.toLowerCase())
-      );
-      setSearchOptions(filtered);
-    } else {
-      setSearchOptions([]);
-    }
+  const handleSendNotification = (emp, id) => {
+    navigate("/admin/taskassign", {
+      state: { ...emp, progress: "error", employee_id: id },
+    });
   };
 
-  const handleSendNotification = (emp) => {
-    navigate("/admin/taskassign", { state: { ...emp, progress: "error" } });
-  };
+  const [searchTerm, setSearchTerm] = useState("");
+  const filterEmpData = employeeData?.filter(
+    (data) =>
+      data?.employee_name
+        ?.toLowerCase()
+        .trim()
+        .includes(searchTerm.toLowerCase().trim()) ||
+      data?.project
+        ?.toLowerCase()
+        .trim()
+        .includes(searchTerm.toLowerCase().trim()) ||
+      data?.title
+        ?.toLowerCase()
+        .trim()
+        .includes(searchTerm.toLowerCase().trim()) ||
+      data?.isbn?.toLowerCase().trim().includes(searchTerm.toLowerCase().trim())
+  );
   return (
     <div className="attendance-Table">
       <div className="d-flex justify-content-between align-items-center my-2">
@@ -97,18 +100,13 @@ function ProgressTracker() {
             </LocalizationProvider>
           </div>
           <div className="search-field col-lg-6">
-            <Autocomplete
-              options={searchOptions}
-              inputValue={searchinputValue}
-              onInputChange={handleSearchInputChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search by employee ,title , ISBN ..."
-                  size="small"
-                  fullWidth
-                />
-              )}
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Search by Employee Name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
             />
           </div>
         </div>
@@ -145,61 +143,128 @@ function ProgressTracker() {
               <TableCell sx={{ width: 80 }}>Target</TableCell>
               <TableCell sx={{ width: 80 }}>Completed</TableCell>
               <TableCell sx={{ width: 80 }}>Pending </TableCell>
-              <TableCell sx={{ width: 150 }}>Status</TableCell>
+              <TableCell sx={{ width: 80 }}>Status</TableCell>
               <TableCell sx={{ width: 70 }}>In-Time</TableCell>
               <TableCell sx={{ width: 70 }}>Out-Time</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {employeeData?.length > 0 ? (
-              employeeData.map((emp) => (
-                <TableRow
-                  key={emp.employee_id}
-                  sx={{
-                    "& td": {
-                      padding: "9px 8px",
-                      whiteSpace: "normal",
-                      wordBreak: "break-word",
-                    },
-                  }}
-                >
-                  <TableCell
-                    sx={{
-                      maxWidth: 120,
-                      whiteSpace: "normal",
-                      wordWrap: "break-word",
-                    }}
-                  >
-                    {emp.employee_name}
-                  </TableCell>
-                  <TableCell>{emp.project}</TableCell>
-                  <TableCell>{emp.title}</TableCell>
-                  <TableCell>
-                    <Tooltip title="click to send error">
-                      <span
-                        style={{ cursor: "pointer" }}
-                        role="button"
-                        onClick={() => handleSendNotification(emp)}
+            {loading ? (
+              <div>Getting Data...</div>
+            ) : filterEmpData?.length > 0 ? (
+              [...filterEmpData]
+                ?.sort((a, b) => a.employee_name.localeCompare(b.employee_name))
+                ?.map((emp) =>
+                  emp?.tasks?.length > 0 ? (
+                    emp.tasks.map((task, index) => (
+                      <TableRow
+                        key={`${emp.employee_id}-${index}`}
+                        sx={{
+                          "& td": {
+                            padding: "9px 8px",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                          },
+                        }}
                       >
-                        {emp.isbn}
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell>{emp.start_date}</TableCell>
-                  <TableCell>{emp.due_date}</TableCell>
-                  <TableCell>{emp.end_date}</TableCell>
-                  <TableCell align="center">{emp.pages}</TableCell>
-                  <TableCell align="center">{emp.target}</TableCell>
-                  <TableCell align="center">{emp.completed}</TableCell>
-                  <TableCell align="center">{emp.pending}</TableCell>
-                  <TableCell align="center">{emp.status}</TableCell>
-                  <TableCell align="center">{emp.in_time}</TableCell>
-                  <TableCell align="center">{emp.out_time}</TableCell>
-                </TableRow>
-              ))
+                        {index === 0 ? (
+                          <TableCell
+                            rowSpan={emp.tasks.length}
+                            sx={{
+                              maxWidth: 120,
+                              whiteSpace: "normal",
+                              wordWrap: "break-word",
+                            }}
+                          >
+                            {emp.employee_name}
+                          </TableCell>
+                        ) : null}
+                        <TableCell>{task.project}</TableCell>
+                        <TableCell>{task.title}</TableCell>
+                        <TableCell>
+                          <span
+                            style={{ cursor: "pointer" }}
+                            role="button"
+                            onClick={() =>
+                              handleSendNotification(task, emp?.employee_id)
+                            }
+                          >
+                            {task.isbn}
+                          </span>
+                        </TableCell>
+                        <TableCell>{task.start_date}</TableCell>
+                        <TableCell>{task.due_date}</TableCell>
+                        <TableCell>{task.end_date}</TableCell>
+                        <TableCell align="center">{task.pages}</TableCell>
+                        <TableCell align="center">{task.target}</TableCell>
+                        <TableCell align="center">{task.completed}</TableCell>
+                        <TableCell align="center">{task.pending}</TableCell>
+                        <TableCell align="center">
+                          <Tooltip
+                            title={
+                              task?.incomplete_topics?.length > 0 &&
+                              task?.incomplete_topics?.map((status) => (
+                                <div>{status}</div>
+                              ))
+                            }
+                          >
+                            <span style={{ cursor: "pointer" }}>
+                              {task.status}
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* Show in/out time only on first task row */}
+                        {index === 0 ? (
+                          <>
+                            <TableCell
+                              rowSpan={emp.tasks.length}
+                              align="center"
+                            >
+                              {emp.in_time}
+                            </TableCell>
+                            <TableCell
+                              rowSpan={emp.tasks.length}
+                              align="center"
+                            >
+                              {emp.out_time}
+                            </TableCell>
+                          </>
+                        ) : null}
+                      </TableRow>
+                    ))
+                  ) : (
+                    // If employee has no tasks
+                    <TableRow
+                      key={emp.employee_id}
+                      sx={{
+                        "& td": {
+                          padding: "9px 8px",
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        },
+                      }}
+                    >
+                      <TableCell>{emp.employee_name}</TableCell>
+                      {emp?.user_status === "suspend" || emp?.is_leave ? (
+                        <>
+                          <TableCell colSpan={13} align="center">
+                            {emp?.is_leave ? "leave" : emp?.user_status}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell colSpan={11}></TableCell>
+                          <TableCell align="center">{emp.in_time}</TableCell>
+                          <TableCell align="center">{emp.out_time}</TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  )
+                )
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="p-3">
+                <TableCell colSpan={14} className="p-3">
                   No Data Found
                 </TableCell>
               </TableRow>

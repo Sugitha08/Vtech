@@ -10,9 +10,9 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.Text, nullable=False)
-    check_in_time = db.Column(db.Time, nullable=True)
-    check_out_time = db.Column(db.Time, nullable=True)
+    status = db.Column(db.String(50),nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 
 class UserLoginLog(db.Model):
@@ -24,6 +24,8 @@ class UserLoginLog(db.Model):
     logout_datetime = db.Column(db.DateTime, nullable=True)
     login_date = db.Column(db.Date, nullable=False) 
 
+    leave = db.Column(db.Boolean, default=False)
+    permission = db.Column(db.Boolean, default=False)
     user = db.relationship('User', backref='login_sessions')
 
 class MorningUpdate(db.Model):
@@ -46,7 +48,7 @@ class MorningTask(db.Model):
     project_type = db.Column(db.String(100))
     project_title = db.Column(db.String(200))
     project_description = db.Column(db.String(200))
-    book_isbn = db.Column(db.Integer)
+    book_isbn = db.Column(db.String(50))
     total_pages = db.Column(db.Integer)
     target_pages = db.Column(db.Integer)
     start_date = db.Column(db.Date)
@@ -72,7 +74,7 @@ class EveningTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     evening_update_id = db.Column(db.Integer, db.ForeignKey('evening_updates.id'), nullable=False)
     project_title = db.Column(db.String(200))
-    book_isbn = db.Column(db.Integer)
+    book_isbn = db.Column(db.String(50))
     completed_pages = db.Column(db.Integer)
     incompleted_pages = db.Column(db.Integer)
     end_date = db.Column(db.Date)
@@ -107,4 +109,16 @@ class TaskAssignment(db.Model):
     due_date = db.Column(db.Date, nullable=True)
     task_note = db.Column(db.Text, nullable=True)
     source = db.Column(db.String(50), nullable=False, default="assign") 
+    project_type = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Project(db.Model):
+    __tablename__ = 'projects'
+    id = db.Column(db.Integer, primary_key=True)
+    project_title = db.Column(db.String(255), nullable=False)
+    client_name = db.Column(db.String(255), nullable=False)
+    book_isbn = db.Column(db.String(50))
+    total_pages = db.Column(db.Integer)
+    project_date = db.Column(db.Date)
+    type = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -1,19 +1,21 @@
 import { Autocomplete, InputAdornment, TextField } from "@mui/material";
 import "./Login.css";
 import { Link, useNavigate } from "react-router-dom";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { TimeField } from "@mui/x-date-pickers/TimeField";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
-import { RegisterThunk } from "../../redux/thunk/RegisterThunk";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  RegisterThunk,
+  VerifyRegOtpThunk,
+} from "../../redux/thunk/RegisterThunk";
+import AuthenticateUser from "./AuthenticateUser";
 
 function Register() {
   const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state?.Register);
   const initialValues = {
     fname: "",
     role: "",
@@ -21,9 +23,10 @@ function Register() {
     email: "",
     password: "",
     cpassword: "",
-    checkIn: null,
-    checkOut: null,
   };
+  const [verifyLoad, setVerifyLoad] = useState(false);
+  const [token, setTokens] = useState();
+
   const [passwordVisible, setPasswordVisibile] = useState(false);
   const [passwordCVisible, setPasswordCVisibile] = useState(false);
   const Emp_role = [
@@ -54,10 +57,10 @@ function Register() {
         "confirm password and password are not matching"
       )
       .required("*this field is required"),
-    checkIn: Yup.string().required("*This field is required"),
-    checkOut: Yup.string().required("*This field is required"),
   });
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  const [openModal, setOpenModal] = useState(false);
 
   const handleRegister = ({ values, resetForm }) => {
     const payload = {
@@ -66,14 +69,48 @@ function Register() {
       password: values.password,
       role: values.role,
       username: values.username,
-      checkIn: values.checkIn,
-      checkOut: values.checkOut,
+      status:"active"
     };
-    dispatch(RegisterThunk(payload))
+    if (values.role === "superadmin" || values.role === "admin") {
+      dispatch(RegisterThunk(payload))
+        .unwrap()
+        .then(() => {
+          setOpenModal(true);
+        });
+    } else {
+      dispatch(RegisterThunk(payload))
+        .unwrap()
+        .then(() => {
+          navigate("/");
+        });
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    setVerifyLoad(true);
+    const payload = {
+      name: formik.values.fname,
+      email: formik.values.email,
+      password: formik.values.password,
+      role: formik.values.role,
+      username: formik.values.username,
+      otp: token,
+    };
+    dispatch(VerifyRegOtpThunk(payload))
       .unwrap()
       .then(() => {
-        navigate("/")
+        setTokens(null);
+        handleClose();
+        navigate("/");
+        setVerifyLoad(false);
+      })
+      .catch((err) => {
+        setVerifyLoad(false);
       });
+  };
+
+  const handleClose = () => {
+    setOpenModal(false);
   };
 
   const formik = useFormik({
@@ -210,70 +247,28 @@ function Register() {
               },
             }}
           />
-          <div className="row">
-            <div className="col-lg-6 col-md-6 col-sm-12">
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <TimeField
-                  label="Check-in"
-                  size="small"
-                  className="my-2"
-                  fullWidth
-                  onChange={(newValue) => {
-                    const time = newValue.format("hh:mm A");
-                    console.log(time);
-
-                    formik.setFieldValue("checkIn", time);
-                  }}
-                  onBlur={formik.handleBlur}
-                  slotProps={{
-                    textField: {
-                      name: "checkIn",
-                      size: "small",
-                      fullWidth: true,
-                      error: formik.touched.checkIn && formik.errors.checkIn,
-                      helperText:
-                        formik.touched.checkIn && formik.errors.checkIn,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            </div>
-            <div className="col-lg-6 col-md-6 col-sm-12">
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <TimeField
-                  label="Check-Out"
-                  size="small"
-                  className="my-2"
-                  fullWidth
-                  onChange={(newValue) => {
-                    const time = newValue.format("hh:mm A");
-                    formik.setFieldValue("checkOut", time);
-                  }}
-                  onBlur={formik.handleBlur}
-                  slotProps={{
-                    textField: {
-                      name: "checkOut",
-                      size: "small",
-                      fullWidth: true,
-                      error: formik.touched.checkOut && formik.errors.checkOut,
-                      helperText:
-                        formik.touched.checkOut && formik.errors.checkOut,
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            </div>
-          </div>
           <div style={{ fontSize: "12px" }}>
             Already have an account? <Link to="/">Login</Link>
           </div>
           <div className="d-flex justify-content-end  my-1  ">
-            <button type="submit" className="btn btn-success">
-              Register
+            <button
+              type="submit"
+              className="btn btn-success"
+              disabled={loading ? true : false}
+            >
+              {loading ? "Loading" : "Register"}
             </button>
           </div>
         </form>
       </div>
+      <AuthenticateUser
+        open={openModal}
+        handleClose={handleClose}
+        token={token}
+        setTokens={setTokens}
+        handleVerifyOtp={handleVerifyOtp}
+        verifyLoad={verifyLoad}
+      />
     </div>
   );
 }

@@ -1,10 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../Header/Header";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import "../Layout.css";
+import { useDispatch } from "react-redux";
+import { Base_url } from "../../../Environment/Environment";
+import axios from "axios";
 
 function AdminLayout() {
   const { pathname } = useLocation();
+  const dispatch = useDispatch();
+  const [userName, setUserName] = useState(null);
+  useEffect(() => {
+    const token = localStorage.getItem("jwt_token");
+    axios
+      .get(Base_url + "auth/get_user_name", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => setUserName(res?.data?.username));
+  }, []);
   return (
     <div className="emp-layout">
       <Header>
@@ -37,7 +52,7 @@ function AdminLayout() {
       </Header>
       <div className="emp-content">
         <h4 className="mt-1 mb-2">
-          Admin : <span className="emp-name">Admin Name</span>
+          Admin : <span className="emp-name">{userName}</span>
         </h4>
         <>
           <Outlet />

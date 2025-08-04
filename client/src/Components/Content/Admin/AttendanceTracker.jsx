@@ -16,7 +16,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
-import { AddEmpPerformanceThunk } from "../../../redux/thunk/Addevngtask";
+import { AddEmpPerformanceThunk } from "../../../redux/thunk/EmpPerformanceThunk";
 
 function AttendanceTracker() {
   const dispatch = useDispatch();
@@ -24,7 +24,7 @@ function AttendanceTracker() {
     (state) => state.EmpAttendance
   );
   const [employeeData, setEmployeeData] = useState([]);
-  const [performance, setPerformance] = useState({}); // { employee_id: percentage }
+  const [performance, setPerformance] = useState({});
 
   const handlePerformanceChange = (empId, value) => {
     setPerformance((prev) => ({
@@ -42,23 +42,6 @@ function AttendanceTracker() {
     dispatch(AttendanceThunk(filterDate));
   }, [filterDate]);
 
-  const [searchinputValue, setSearchInputValue] = useState("");
-  const [searchOptions, setSearchOptions] = useState([]);
-
-  const handleSearchInputChange = (event, value) => {
-    setSearchInputValue(value);
-
-    // Show options only after typing 2 or more characters
-    if (value.length >= 2) {
-      const filtered = employees.filter((option) =>
-        option.toLowerCase().includes(value.toLowerCase())
-      );
-      setSearchOptions(filtered);
-    } else {
-      setSearchOptions([]);
-    }
-  };
-
   const handlePerformanceSubmit = async () => {
     const emp_performance = Object.keys(performance).map((empId) => ({
       employee_id: parseInt(empId),
@@ -68,6 +51,11 @@ function AttendanceTracker() {
 
     dispatch(AddEmpPerformanceThunk({ emp_performance: emp_performance }));
   };
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const filterEmpData = employeeData?.filter((data) =>
+    data?.employee_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   return (
     <div className="attendance-Table">
       <div className="d-flex justify-content-between align-items-center my-2">
@@ -112,18 +100,13 @@ function AttendanceTracker() {
             </LocalizationProvider>
           </div>
           <div className="search-field col-lg-6">
-            <Autocomplete
-              options={searchOptions}
-              inputValue={searchinputValue}
-              onInputChange={handleSearchInputChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search by employee Name ..."
-                  size="small"
-                  fullWidth
-                />
-              )}
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Search by Employee Name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
             />
           </div>
         </div>
@@ -165,11 +148,16 @@ function AttendanceTracker() {
               <TableCell sx={{ width: 60 }} align="center">
                 Leave
               </TableCell>
+              <TableCell sx={{ width: 60 }} align="center">
+                all Leave
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {employeeData?.length > 0 ? (
-              employeeData?.map((emp) => (
+            {loading ? (
+              <div>Getting Data...</div>
+            ) : filterEmpData?.length > 0 ? (
+              [...filterEmpData]?.sort((a, b) => a.employee_name.localeCompare(b.employee_name))?.map((emp) => (
                 <TableRow
                   key={emp?.employee_id}
                   sx={{ "& td": { padding: "7px" } }}
@@ -183,34 +171,69 @@ function AttendanceTracker() {
                   >
                     {emp?.employee_name}
                   </TableCell>
-                  <TableCell>
-                    {emp.performance_percentage ? (
-                      emp.performance_percentage
-                    ) : (
-                      <TextField
-                        size="small"
-                        variant="outlined"
-                        value={performance[emp.employee_id] ?? ""}
-                        onChange={(e) =>
-                          handlePerformanceChange(
-                            emp.employee_id,
-                            e.target.value
-                          )
-                        }
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell align="center">{emp?.checkin_1}</TableCell>
-                  <TableCell align="center">{emp?.checkout_1}</TableCell>
-                  <TableCell align="center">{emp?.checkin_2}</TableCell>
-                  <TableCell align="center">{emp?.checkout_2}</TableCell>
-                  <TableCell align="center">{emp?.checkin_3}</TableCell>
-                  <TableCell align="center">{emp?.checkout_2}</TableCell>
-                  <TableCell align="center">{emp?.working_hours}</TableCell>
-                  <TableCell align="center">{emp?.shortage_hours}</TableCell>
-                  <TableCell align="center">{emp?.late_arrival}</TableCell>
-                  <TableCell align="center">{emp?.permission}</TableCell>
-                  <TableCell align="center">{emp?.leave}</TableCell>
+                  {emp?.user_status !== "suspend" ? (
+                    <>
+                      <TableCell>
+                        {emp.performance_percentage ? (
+                          emp.performance_percentage
+                        ) : (
+                          <TextField
+                            size="small"
+                            variant="outlined"
+                            value={
+                              emp?.is_leave
+                                ? 0
+                                : performance[emp.employee_id] ?? ""
+                            }
+                            onChange={(e) =>
+                              handlePerformanceChange(
+                                emp.employee_id,
+                                e.target.value
+                              )
+                            }
+                          />
+                        )}
+                      </TableCell>
+                      {emp?.is_leave ? (
+                        <TableCell colSpan={8} sx={{ textAlign: "center" }}>
+                          Leave
+                        </TableCell>
+                      ) : (
+                        <>
+                          <TableCell align="center">{emp?.checkin_1}</TableCell>
+                          <TableCell align="center">
+                            {emp?.checkout_1}
+                          </TableCell>
+                          <TableCell align="center">{emp?.checkin_2}</TableCell>
+                          <TableCell align="center">
+                            {emp?.checkout_2}
+                          </TableCell>
+                          <TableCell align="center">{emp?.checkin_3}</TableCell>
+                          <TableCell align="center">
+                            {emp?.checkout_3}
+                          </TableCell>
+                          <TableCell align="center">
+                            {emp?.working_hours}
+                          </TableCell>
+                          <TableCell align="center">
+                            {emp?.shortage_hours}
+                          </TableCell>
+                        </>
+                      )}
+                      <TableCell align="center">{emp?.late_arrival}</TableCell>
+                      <TableCell align="center">{emp?.permission}</TableCell>
+                      <TableCell align="center">{emp?.leave}</TableCell>
+                      <TableCell align="center">
+                        {emp?.overall_leave_count}
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell colSpan={13} align="center">
+                        {emp?.user_status}
+                      </TableCell>
+                    </>
+                  )}
                 </TableRow>
               ))
             ) : (

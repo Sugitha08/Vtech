@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { MrngTaskService } from "../../api/Service";
+import { GetMrngTaskService, MrngTaskService } from "../../api/Service";
 import { toast } from "react-toastify";
 
 export const AddmrngTaskThunk = createAsyncThunk(
@@ -8,6 +8,20 @@ export const AddmrngTaskThunk = createAsyncThunk(
     try {
       const response = await MrngTaskService(TaskData);
       toast.success(response?.data?.message);
+      return response?.data;
+    } catch (error) {
+      toast.error(error?.response?.data?.error);
+      return rejectWithValue(error?.response?.data?.error);
+    }
+  }
+);
+
+export const GetmrngTaskThunk = createAsyncThunk(
+  "getmrngtask",
+  async (Date, { rejectWithValue }) => {
+    try {
+      const response = await GetMrngTaskService(Date);
+      // toast.success(response?.data?.message);
       return response?.data;
     } catch (error) {
       toast.error(error?.response?.data?.error);

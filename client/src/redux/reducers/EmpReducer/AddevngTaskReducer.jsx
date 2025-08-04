@@ -1,16 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  AddEmpPerformanceThunk,
-  AddevngTaskThunk,
-} from "../../thunk/Addevngtask";
+import { AddevngTaskThunk } from "../../thunk/Addevngtask";
 
 const AddevngTaskReducer = createSlice({
   name: "addevngtask",
   initialState: {
     loading: false,
     data: {},
-    performance: {},
-    perload: false,
     error: null,
   },
   extraReducers: (builder) => {
@@ -24,17 +19,6 @@ const AddevngTaskReducer = createSlice({
     builder.addCase(AddevngTaskThunk.rejected, (state, action) => {
       state.error = action.error;
       state.loading = false;
-    });
-    builder.addCase(AddEmpPerformanceThunk.pending, (state, action) => {
-      state.perload = true;
-    });
-    builder.addCase(AddEmpPerformanceThunk.fulfilled, (state, action) => {
-      state.performance = action.payload;
-      state.perload = false;
-    });
-    builder.addCase(AddEmpPerformanceThunk.rejected, (state, action) => {
-      state.error = action.error;
-      state.perload = false;
     });
   },
 });

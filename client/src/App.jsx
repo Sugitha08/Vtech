@@ -1,6 +1,8 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/primereact.min.css";
 import { lazy, Suspense } from "react";
 const EmpUpdate = lazy(() => import("./Components/Content/Employee/EmpUpdate"));
 const Register = lazy(() => import("./Components/Authentication/Register"));
@@ -34,8 +36,14 @@ const ProjectDetail = lazy(() =>
   import("./Components/Content/SuperAdmin/ProjectDetail")
 );
 import { ToastContainer } from "react-toastify";
+import EmpPermission from "./Components/Content/Employee/EmpPermission";
+import EmpPerformance from "./Components/Content/SuperAdmin/EmpPerformance";
+import EmpProfile from "./Components/Content/Employee/EMpProfile";
+import ForgotPswd from "./Components/Authentication/ForgotPswd";
+import Employees from "./Components/Content/SuperAdmin/Employees";
 
 function App() {
+  const token = localStorage.getItem("jwt_token") ? true : false;
   return (
     <>
       <ToastContainer />
@@ -44,22 +52,33 @@ function App() {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/employee/*" element={<EmpLayout />}>
-              <Route path="todayTask" element={<EmpTask />} />
-              <Route path="taskUpdate" element={<EmpUpdate />} />
-              <Route path="notification" element={<EmpNotification />} />
-            </Route>
-            <Route path="/admin/*" element={<AdminLayout />}>
-              <Route path="attendance" element={<AttendanceTracker />} />
-              <Route path="progress" element={<ProgressTracker />} />
-              <Route path="taskassign" element={<TaskAssign />} />
-              <Route path="addproject" element={<AddProject />} />
-            </Route>
-            <Route path="/superadmin/*" element={<SuperAdminLayout />}>
-              <Route path="Emp-attendance" element={<EmpAttendance />} />
-              <Route path="Emp-progress" element={<EmpProgress />} />
-              <Route path="project" element={<ProjectDetail />} />
-            </Route>
+            <Route path="/resetpswd" element={<ForgotPswd />} />
+            {/* {token ? ( */}
+            <>
+              <Route path="/employee/*" element={<EmpLayout />}>
+                <Route path="todayTask" element={<EmpTask />} />
+                <Route path="taskUpdate" element={<EmpUpdate />} />
+                <Route path="notification" element={<EmpNotification />} />
+                <Route path="permission" element={<EmpPermission />} />
+                <Route path="Profile" element={<EmpProfile />} />
+              </Route>
+              <Route path="/admin/*" element={<AdminLayout />}>
+                <Route path="attendance" element={<AttendanceTracker />} />
+                <Route path="progress" element={<ProgressTracker />} />
+                <Route path="taskassign" element={<TaskAssign />} />
+                <Route path="addproject" element={<AddProject />} />
+              </Route>
+              <Route path="/superadmin/*" element={<SuperAdminLayout />}>
+                <Route path="Emp-attendance" element={<EmpAttendance />} />
+                <Route path="Emp-progress" element={<EmpProgress />} />
+                <Route path="project" element={<ProjectDetail />} />
+                <Route path="performance" element={<EmpPerformance />} />
+                <Route path="employees" element={<Employees />} />
+              </Route>
+            </>
+            {/* ) : (
+              <Route path="*" element={<Navigate to="/" replace />} />
+            )} */}
           </Routes>
         </Suspense>
       </BrowserRouter>

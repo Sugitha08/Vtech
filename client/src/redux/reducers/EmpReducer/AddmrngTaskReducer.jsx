@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { AddmrngTaskThunk } from "../../thunk/Addmrngtask";
-
+import { AddmrngTaskThunk, GetmrngTaskThunk } from "../../thunk/Addmrngtask";
 
 const AddmrngTaskReducer = createSlice({
   name: "addmrngtask",
@@ -8,6 +7,8 @@ const AddmrngTaskReducer = createSlice({
     loading: false,
     data: {},
     error: null,
+    getloading: false,
+    getmrngTask: [],
   },
   extraReducers: (builder) => {
     builder.addCase(AddmrngTaskThunk.pending, (state, action) => {
@@ -20,6 +21,17 @@ const AddmrngTaskReducer = createSlice({
     builder.addCase(AddmrngTaskThunk.rejected, (state, action) => {
       state.error = action.error;
       state.loading = false;
+    });
+    builder.addCase(GetmrngTaskThunk.pending, (state, action) => {
+      state.getloading = true;
+    });
+    builder.addCase(GetmrngTaskThunk.fulfilled, (state, action) => {
+      state.getmrngTask = action.payload;
+      state.getloading = false;
+    });
+    builder.addCase(GetmrngTaskThunk.rejected, (state, action) => {
+      state.error = action.error;
+      state.getloading = false;
     });
   },
 });

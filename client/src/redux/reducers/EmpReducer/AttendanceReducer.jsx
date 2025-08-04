@@ -1,5 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { AttendanceThunk } from "../../thunk/AttendanceThunk";
+import {
+  AttendanceThunk,
+  UpdateAttendanceThunk,
+} from "../../thunk/AttendanceThunk";
 
 const AttendanceReducer = createSlice({
   name: "empAttendance",
@@ -17,6 +20,17 @@ const AttendanceReducer = createSlice({
       state.loading = false;
     });
     builder.addCase(AttendanceThunk.rejected, (state, action) => {
+      state.error = action.error;
+      state.loading = false;
+    });
+    builder.addCase(UpdateAttendanceThunk.pending, (state, action) => {
+      state.loading = true;
+    });
+    builder.addCase(UpdateAttendanceThunk.fulfilled, (state, action) => {
+      // state.emp_attendance = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(UpdateAttendanceThunk.rejected, (state, action) => {
       state.error = action.error;
       state.loading = false;
     });

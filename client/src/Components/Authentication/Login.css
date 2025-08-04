@@ -28,3 +28,18 @@
     width: 90%;
   }
 }
+
+.p-inputotp input[type="text"] {
+  width: 40px !important; /* Adjust width */
+  height: 40px !important; /* Adjust height */
+  text-align: center;
+  margin: 10px 3px;
+  font-size: 1.2em;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+.p-inputotp input:focus {
+  border-color: #235f9b;
+  outline: none;
+  box-shadow: 0 0 5px rgba(108, 99, 255, 0.5);
+}

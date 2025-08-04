@@ -11,6 +11,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { AssignTaskThunk } from "../../../redux/thunk/AssignTask";
+import EditEmpModal from "./EditEmpModal";
 
 function TaskAssign() {
   const { all_employee, loading } = useSelector((state) => state.Employee);
@@ -18,19 +19,33 @@ function TaskAssign() {
   const ErrorInFile = location?.state;
   const dispatch = useDispatch();
   const [employees, setEmployees] = useState([]);
+  const [editEmployee, setEditEmployee] = useState(false);
 
   useEffect(() => {
     dispatch(GetAllEmployeeThunk());
   }, []);
 
+  const ProjectType = [
+    { label: "Epub", value: "epub" },
+    { label: "QC", value: "qc" },
+    { label: "Web Pdf", value: "webpdf" },
+    { label: "XML", value: "xml" },
+  ];
+
   useEffect(() => {
-    setEmployees(all_employee?.employees);
+    if (all_employee?.employees) {
+      const onlyEmployees = all_employee.employees.filter(
+        (emp) => emp.role === "employee"
+      );
+      setEmployees(onlyEmployees);
+    }
   }, [all_employee]);
 
   const initialValues = {
     tasks: [
       {
         employee_id: ErrorInFile?.employee_id ? ErrorInFile?.employee_id : null,
+        ProjectType: "",
         book_isbn: ErrorInFile?.isbn ? ErrorInFile?.isbn : "",
         book_title: ErrorInFile?.title ? ErrorInFile?.title : "",
         target_pages: ErrorInFile?.target ? ErrorInFile?.target : "",
@@ -49,9 +64,8 @@ function TaskAssign() {
         book_title: Yup.string()
           .min(3, "Title must have at least 3 characters")
           .required("*This field is required"),
-        book_isbn: Yup.number()
-          .typeError("*Must be a number")
-          .required("*This field is required"),
+        book_isbn: Yup.string().required("*This field is required"),
+        ProjectType: Yup.string().required("*This field is required"),
         employee_id: Yup.number().required("*This field is required"),
       })
     ),
@@ -72,8 +86,11 @@ function TaskAssign() {
     },
   });
 
+  console.log(formik);
+
   const handleFieldAdd = () => {
     const newProject = {
+      ProjectType: "",
       employee_id: null,
       book_isbn: "",
       book_title: "",
@@ -92,9 +109,17 @@ function TaskAssign() {
     updatedProjects.splice(index, 1); // remove 1 item at that index
     formik.setFieldValue("tasks", updatedProjects);
   };
+
+  const handleClose = () => {
+    setEditEmployee(false);
+  };
+
+  const handleOpenEdit = () => {
+    setEditEmployee(true);
+  };
   return (
     <div className="task-assign">
-      <div className="my-3">
+      <div className="d-flex justify-content-between my-3">
         <h6
           style={{
             color: "rgb(34, 128, 184)",
@@ -105,6 +130,15 @@ function TaskAssign() {
         >
           Allocate task For Employee
         </h6>
+        <div>
+          <span
+            role="button"
+            style={{ color: "#2280b8", textDecoration: "underline" }}
+            onClick={handleOpenEdit}
+          >
+            Edit Employee
+          </span>
+        </div>
       </div>
       <div className="card p-3 ">
         <form onSubmit={formik.handleSubmit}>
@@ -113,8 +147,8 @@ function TaskAssign() {
               <div className="row row-gap-3">
                 <div className="col-lg-2">
                   <Autocomplete
-                    options={employees}
-                    getOptionLabel={(option) => option?.name}
+                    options={employees} 
+                    getOptionLabel={(option) => option?.full_name}
                     value={
                       employees?.find(
                         (emp) =>
@@ -142,6 +176,43 @@ function TaskAssign() {
                           formik.touched.tasks?.[index]?.employee_id &&
                           formik.errors.tasks?.[index]?.employee_id &&
                           formik.errors.tasks?.[index]?.employee_id
+                        }
+                      />
+                    )}
+                  />
+                </div>
+                <div className="col-lg-2">
+                  <Autocomplete
+                    options={ProjectType}
+                    getOptionLabel={(option) => option?.label}
+                    value={
+                      ProjectType?.find(
+                        (emp) =>
+                          emp.value ===
+                          formik.values.tasks?.[index]?.ProjectType
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      formik.setFieldValue(
+                        `tasks[${index}].ProjectType`,
+                        newValue?.value
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        name={`tasks[${index}].ProjectType`}
+                        label="Project Type"
+                        size="small"
+                        fullWidth
+                        error={
+                          formik.touched.tasks?.[index]?.ProjectType &&
+                          Boolean(formik.errors.tasks?.[index]?.ProjectType)
+                        }
+                        helperText={
+                          formik.touched.tasks?.[index]?.ProjectType &&
+                          formik.errors.tasks?.[index]?.ProjectType &&
+                          formik.errors.tasks?.[index]?.ProjectType
                         }
                       />
                     )}
@@ -208,7 +279,9 @@ function TaskAssign() {
                       label="Start date"
                       size="small"
                       value={
-                        dayjs(formik.values.tasks?.[index]?.start_date) || null
+                        (formik.values.tasks?.[index]?.start_date &&
+                          dayjs(formik.values.tasks?.[index]?.start_date)) ||
+                        null
                       }
                       onChange={(newValue) => {
                         const date = dayjs(newValue).format("YYYY-MM-DD");
@@ -234,7 +307,9 @@ function TaskAssign() {
                       label="Due date"
                       size="small"
                       value={
-                        dayjs(formik.values.tasks?.[index]?.due_date) || null
+                        (formik.values.tasks?.[index]?.due_date &&
+                          dayjs(formik.values.tasks?.[index]?.due_date)) ||
+                        null
                       }
                       onChange={(newValue) => {
                         const date = dayjs(newValue).format("YYYY-MM-DD");
@@ -307,6 +382,7 @@ function TaskAssign() {
           </div>
         </form>
       </div>
+      <EditEmpModal open={editEmployee} handleClose={handleClose} />
     </div>
   );
 }

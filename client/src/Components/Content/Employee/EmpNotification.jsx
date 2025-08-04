@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { GetEmpAssignTaskThunk } from "../../../redux/thunk/AssignTask";
+import {
+  DelEmpAssignTaskThunk,
+  GetEmpAssignTaskThunk,
+} from "../../../redux/thunk/AssignTask";
+import { Button } from "@mui/material";
 
 function EmpNotification() {
   const dispatch = useDispatch();
-  const { getEmptask } = useSelector((state) => state.AssignTask);
+  const { getEmpload , getEmptask } = useSelector((state) => state.AssignTask);
   const [empTask, setEmpTask] = useState([]);
 
   useEffect(() => {
@@ -14,45 +18,61 @@ function EmpNotification() {
   useEffect(() => {
     dispatch(GetEmpAssignTaskThunk());
   }, []);
+
+  const handleCompleteTask = (id) => {
+    dispatch(DelEmpAssignTaskThunk({ task_id: id }))
+      .unwrap()
+      .then(() => dispatch(GetEmpAssignTaskThunk()));
+  };
   return (
     <div className="emp-task card shadow" style={{ padding: "20px" }}>
-      <h5 style={{ color: "#2EA3F2" }}>Notification</h5>
+      <h5 style={{ color: "#2EA3F2" }}>Notification - Today Task</h5>
       <div>
-        <h6>Task</h6>
-        {empTask?.length > 0 ? (
-          empTask?.map((task, index) => (
-            <div className="d-flex gap-4 align-items-center" key={index}>
-              <div
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "50%",
-                  backgroundColor: task?.source === "error" ? "red" : "green",
-                }}
-              ></div>
-              <div>
-                <strong>Book Title :</strong> {task?.book_title}
-              </div>
-              <div>
-                <strong>Book ISBN :</strong> {task?.book_isbn}
-              </div>
-              <div>
-                <strong>Target Page :</strong> {task?.target_pages}
-              </div>
-              <div>
-                <strong>Start Date :</strong> {task?.start_date}
-              </div>
-              <div>
-                <strong>Due Date :</strong> {task?.due_date}
-              </div>
-              <div>
-                <strong>Task :</strong> {task?.task_note}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div>No Notification</div>
-        )}
+        <table className="table" style={{ tableLayout: "fixed" }}>
+          <thead>
+            <tr>
+              <th>Book Type</th>
+              <th>Book Title</th>
+              <th>ISBN Number</th>
+              <th>Target Pages</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Task</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {getEmpload ? <div>Getting Task...</div> : empTask?.length > 0 ? (
+              empTask?.map((task, index) => (
+                <tr>
+                  <td>{task?.Project_type}</td>
+                  <td>{task?.book_title}</td>
+                  <td>{task?.book_isbn}</td>
+                  <td>{task?.target_pages}</td>
+                  <td>{task?.start_date}</td>
+                  <td>{task?.due_date}</td>
+                  <td>{task?.task_note ? task?.task_note : "-"}</td>
+                  <td>
+                    <Button
+                      type="button"
+                      sx={{
+                        padding: "4px 5px",
+                        backgroundColor: "green",
+                        color: "#f6f6f6",
+                      }}
+                      onClick={() => handleCompleteTask(task?.task_id)}
+                    >
+                      Complete
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <div>No Task Assigned Yet</div>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

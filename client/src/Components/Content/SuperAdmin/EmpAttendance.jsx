@@ -8,7 +8,8 @@ import {
   TableCell,
   TableBody,
   TextField,
-  Autocomplete,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,10 +18,11 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
+import { MdEditCalendar } from "react-icons/md";
+import EdiAttendanceModal from "./EdiAttendanceModal";
 
 function EmpAttendance() {
   const [searchinputValue, setSearchInputValue] = useState("");
-  const [searchOptions, setSearchOptions] = useState([]);
   const dispatch = useDispatch();
   const { emp_attendance, loading } = useSelector(
     (state) => state.EmpAttendance
@@ -36,17 +38,19 @@ function EmpAttendance() {
     dispatch(AttendanceThunk(filterDate));
   }, [filterDate]);
 
-  const handleSearchInputChange = (event, value) => {
-    setSearchInputValue(value);
-    // Show options only after typing 2 or more characters
-    if (value.length >= 2) {
-      const filtered = employees.filter((option) =>
-        option.toLowerCase().includes(value.toLowerCase())
-      );
-      setSearchOptions(filtered);
-    } else {
-      setSearchOptions([]);
-    }
+  const [searchTerm, setSearchTerm] = useState("");
+  const filterEmpData = employeeData?.filter((data) =>
+    data?.employee_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const [selectedEmpData, setSelectedEmpData] = useState(null);
+  const [editAttOpen, setEditAttOpen] = useState(false);
+  const handleEditAttendance = (emp) => {
+    setEditAttOpen(true);
+    setSelectedEmpData({ ...emp, login_date: filterDate });
+  };
+  const handleCloseEdit = () => {
+    setEditAttOpen(false);
   };
   return (
     <div className="attendance-Table">
@@ -90,18 +94,13 @@ function EmpAttendance() {
             </LocalizationProvider>
           </div>
           <div className="search-field col-lg-6">
-            <Autocomplete
-              options={searchOptions}
-              inputValue={searchinputValue}
-              onInputChange={handleSearchInputChange}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search by employee Name ..."
-                  size="small"
-                  fullWidth
-                />
-              )}
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Search by Employee Name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
             />
           </div>
         </div>
@@ -109,7 +108,13 @@ function EmpAttendance() {
 
       <TableContainer component={Paper}>
         <Table
-          sx={{ width: "100%", tableLayout: "fixed" }}
+          sx={{
+            width: "100%",
+            tableLayout: "fixed",
+            "& .MuiTableCell-root": {
+              border: "0.2px solid #eeeeee",
+            },
+          }}
           aria-label="simple table"
         >
           <TableHead>
@@ -139,38 +144,80 @@ function EmpAttendance() {
               <TableCell sx={{ width: 60 }} align="center">
                 Leave
               </TableCell>
+              <TableCell sx={{ width: 60 }} align="center">
+                all Leave
+              </TableCell>
+              <TableCell sx={{ width: 60 }} align="center">
+                Action
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {employeeData?.length > 0 ? (
-              employeeData?.map((emp) => (
-                <TableRow
-                  key={emp?.employee_id}
-                  sx={{ "& td": { padding: "7px" } }}
-                >
-                  <TableCell
-                    sx={{
-                      maxWidth: 120,
-                      whiteSpace: "normal",
-                      wordWrap: "break-word",
-                    }}
+            {loading ? (
+              <div>Getting Data...</div>
+            ) : filterEmpData?.length > 0 ? (
+              [...filterEmpData]
+                ?.sort((a, b) => a.employee_name.localeCompare(b.employee_name))
+                ?.map((emp) => (
+                  <TableRow
+                    key={emp?.employee_id}
+                    sx={{ "& td": { padding: "7px" } }}
                   >
-                    {emp?.employee_name}
-                  </TableCell>
-                  <TableCell>{emp?.performance_percentage}</TableCell>
-                  <TableCell align="center">{emp?.checkin_1}</TableCell>
-                  <TableCell align="center">{emp?.checkout_1}</TableCell>
-                  <TableCell align="center">{emp?.checkin_2}</TableCell>
-                  <TableCell align="center">{emp?.checkout_2}</TableCell>
-                  <TableCell align="center">{emp?.checkin_3}</TableCell>
-                  <TableCell align="center">{emp?.checkout_2}</TableCell>
-                  <TableCell align="center">{emp?.working_hours}</TableCell>
-                  <TableCell align="center">{emp?.shortage_hours}</TableCell>
-                  <TableCell align="center">{emp?.late_arrival}</TableCell>
-                  <TableCell align="center">{emp?.permission}</TableCell>
-                  <TableCell align="center">{emp?.leave}</TableCell>
-                </TableRow>
-              ))
+                    <TableCell
+                      sx={{
+                        maxWidth: 120,
+                        whiteSpace: "normal",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      {emp?.employee_name}
+                    </TableCell>
+                    {emp?.user_status !== "suspend" && !emp?.is_leave ? (
+                      <>
+                        <TableCell>{emp?.performance_percentage}</TableCell>
+                        <TableCell align="center">{emp?.checkin_1}</TableCell>
+                        <TableCell align="center">{emp?.checkout_1}</TableCell>
+                        <TableCell align="center">{emp?.checkin_2}</TableCell>
+                        <TableCell align="center">{emp?.checkout_2}</TableCell>
+                        <TableCell align="center">{emp?.checkin_3}</TableCell>
+                        <TableCell align="center">{emp?.checkout_3}</TableCell>
+                        <TableCell align="center">
+                          {emp?.working_hours}
+                        </TableCell>
+                        <TableCell align="center">
+                          {emp?.shortage_hours}
+                        </TableCell>
+                        <TableCell align="center">
+                          {emp?.late_arrival}
+                        </TableCell>
+                        <TableCell align="center">{emp?.permission}</TableCell>
+                        <TableCell align="center">{emp?.leave}</TableCell>
+                        <TableCell align="center">
+                          {emp?.overall_leave_count}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Tooltip title="edit">
+                            <IconButton
+                              onClick={() => handleEditAttendance(emp)}
+                            >
+                              <MdEditCalendar size="14" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell colSpan={14} align="center">
+                          {emp?.user_status === "suspend"
+                            ? "suspend"
+                            : emp?.is_leave
+                            ? "leave"
+                            : ""}
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                ))
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="p-3">
@@ -193,6 +240,11 @@ function EmpAttendance() {
           SUBMIT
         </button>
       </div>
+      <EdiAttendanceModal
+        open={editAttOpen}
+        handleClose={handleCloseEdit}
+        selectedEmpData={selectedEmpData}
+      />
     </div>
   );
 }

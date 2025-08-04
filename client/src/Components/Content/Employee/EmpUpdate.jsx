@@ -1,4 +1,5 @@
 import {
+  Autocomplete,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -15,14 +16,70 @@ import { MdDelete } from "react-icons/md";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { AddevngTaskThunk } from "../../../redux/thunk/Addevngtask";
+import { useEffect } from "react";
+import { GetmrngTaskThunk } from "../../../redux/thunk/Addmrngtask";
+import dayjs from "dayjs";
 
 function EmpUpdate() {
   const dispatch = useDispatch();
+  const { getmrngTask } = useSelector((state) => state.MorningTask);
+  const { loading } = useSelector((state) => state.EveningTask);
+  useEffect(() => {
+    const date = dayjs().format("YYYY-MM-DD");
+    dispatch(GetmrngTaskThunk(date));
+  }, []);
+
+  useEffect(() => {
+    if (getmrngTask?.tasks?.length) {
+      const mappedProjects = getmrngTask.tasks.map((task) => ({
+        project_type: projectType.find(
+        (type) => type.value === task.project_type
+       )?.value || "",
+        project_title: task.project_title || "",
+        book_isbn: task.book_isbn || null,
+        completed_pages: null,
+        incompleted_pages: null,
+        end_date: null,
+        is_contentExt_pending: false,
+        is_styleview_pending: false,
+        is_packagecreate_pending: false,
+        is_validation_pending: false,
+        is_compare_pending: false,
+        is_qc_pending: false,
+      }));
+
+      formik.setValues({
+        ...formik.values,
+        project: mappedProjects,
+      });
+    }
+  }, [getmrngTask]);
+
+  const projectType = [
+    {
+      label: "EPub",
+      value: "epub",
+    },
+    {
+      label: "Web Pdf",
+      value: "webpdf",
+    },
+    {
+      label: "XML",
+      value: "xml",
+    },
+    {
+      label: "QC",
+      value: "qc",
+    },
+  ];
+
   const initialValues = {
     project: [
       {
+        project_type: "",
         project_title: "",
         book_isbn: null,
         completed_pages: null,
@@ -40,9 +97,6 @@ function EmpUpdate() {
   };
 
   const validation = Yup.object().shape({
-    status: Yup.string()
-      .min(3, "Title must have at least 10 characters")
-      .required("*This field is required"),
     project: Yup.array().of(
       Yup.object().shape({
         project_title: Yup.string()
@@ -56,8 +110,6 @@ function EmpUpdate() {
   });
 
   const handleAddUpdate = (values, resetForm) => {
-    console.log("dsfsdf");
-    
     const payload = {
       tasks: values?.project,
     };
@@ -70,14 +122,13 @@ function EmpUpdate() {
     initialValues: initialValues,
     validationSchema: validation,
     onSubmit: (values, { resetForm }) => {
-      console.log("submit");
-      
       handleAddUpdate(values, resetForm);
     },
   });
 
   const handleFieldAdd = () => {
     const newProject = {
+      project_type: "",
       project_title: "",
       completed_pages: null,
       incompleted_pages: null,
@@ -107,6 +158,35 @@ function EmpUpdate() {
           formik?.values?.project?.map((data, index) => (
             <div className="task-form ">
               <div className="row">
+                <div className="col-lg-2 col-md-6 col-sm-12 ">
+                  <Autocomplete
+                    options={projectType}
+                    getOptionLabel={(option) => option?.label || ""}
+                    value={
+                      projectType.find(
+                        (type) =>
+                          type.value ===
+                          formik.values.project?.[index]?.project_type
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      formik.setFieldValue(
+                        `project[${index}].project_type`,
+                        newValue?.value || ""
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        name={`project[${index}].project_type`}
+                        label="Project Type"
+                        size="small"
+                        className="my-3"
+                        fullWidth
+                      />
+                    )}
+                  />
+                </div>
                 <div className="col-lg-3">
                   <TextField
                     label="Enter Title"
@@ -115,7 +195,7 @@ function EmpUpdate() {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={formik.values.project[index].project_title}
+                    value={formik.values.project[index].project_title || ""}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     error={
@@ -137,7 +217,7 @@ function EmpUpdate() {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={formik.values.project[index].book_isbn}
+                    value={formik.values.project[index].book_isbn || ""}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     error={
@@ -160,7 +240,7 @@ function EmpUpdate() {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    value={formik.values.project[index].completed_pages}
+                    value={formik.values.project[index].completed_pages || ""}
                     onChange={formik.handleChange}
                   />
                 </div>
@@ -172,7 +252,7 @@ function EmpUpdate() {
                     size="small"
                     fullWidth
                     name={`project[${index}].incompleted_pages`}
-                    value={formik.values.project[index].incompleted_pages}
+                    value={formik.values.project[index].incompleted_pages || ""}
                     onChange={formik.handleChange}
                   />
                 </div>
@@ -180,11 +260,16 @@ function EmpUpdate() {
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="End date"
-                      size="small"
+                      value={
+                        formik.values.project?.[index]?.end_date
+                          ? dayjs(formik.values.project[index].end_date)
+                          : null
+                      }
                       onChange={(newValue) => {
+                        const endDate = dayjs(newValue).format("YYYY-MM-DD");
                         formik.setFieldValue(
                           `project[${index}].end_date`,
-                          newValue
+                          endDate
                         );
                       }}
                       onBlur={formik.handleBlur}
@@ -199,7 +284,7 @@ function EmpUpdate() {
                   </LocalizationProvider>
                 </div>
               </div>
-              <div>
+              <div className="mt-3">
                 <FormControl component="fieldset">
                   <FormLabel
                     component="legend"
@@ -210,7 +295,9 @@ function EmpUpdate() {
                   <FormGroup aria-label="position" row>
                     <FormControlLabel
                       name={`project[${index}].is_contentExt_pending`}
-                      value={formik.values.project[index].is_contentExt_pending}
+                      value={
+                        formik.values.project[index].is_contentExt_pending || ""
+                      }
                       control={
                         <Checkbox
                           checked={
@@ -224,7 +311,9 @@ function EmpUpdate() {
                     />
                     <FormControlLabel
                       name={`project[${index}].is_styleview_pending`}
-                      value={formik.values.project[index].is_styleview_pending}
+                      value={
+                        formik.values.project[index].is_styleview_pending || ""
+                      }
                       control={
                         <Checkbox
                           checked={
@@ -239,7 +328,8 @@ function EmpUpdate() {
                     <FormControlLabel
                       name={`project[${index}].is_packagecreate_pending`}
                       value={
-                        formik.values.project[index].is_packagecreate_pending
+                        formik.values.project[index].is_packagecreate_pending ||
+                        ""
                       }
                       control={
                         <Checkbox
@@ -254,7 +344,9 @@ function EmpUpdate() {
                       labelPlacement="end"
                     />
                     <FormControlLabel
-                      value={formik.values.project[index].is_validation_pending}
+                      value={
+                        formik.values.project[index].is_validation_pending || ""
+                      }
                       name={`project[${index}].is_validation_pending`}
                       control={
                         <Checkbox
@@ -269,7 +361,9 @@ function EmpUpdate() {
                     />
                     <FormControlLabel
                       name={`project[${index}].is_compare_pending`}
-                      value={formik.values.project[index].is_compare_pending}
+                      value={
+                        formik.values.project[index].is_compare_pending || ""
+                      }
                       control={
                         <Checkbox
                           checked={
@@ -283,7 +377,7 @@ function EmpUpdate() {
                     />
                     <FormControlLabel
                       name={`project[${index}].is_qc_pending`}
-                      value={formik.values.project[index].is_qc_pending}
+                      value={formik.values.project[index].is_qc_pending || ""}
                       control={
                         <Checkbox
                           checked={formik.values.project[index].is_qc_pending}
@@ -349,8 +443,9 @@ function EmpUpdate() {
               color: "#fff",
               fontWeight: "500",
             }}
+            disabled={loading ? true : false}
           >
-            SUBMIT STATUS
+            {loading ? "Loading..." : " SUBMIT STATUS"}
           </button>
         </div>
       </form>

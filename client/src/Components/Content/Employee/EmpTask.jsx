@@ -1,4 +1,10 @@
-import { Button, IconButton, TextField, Tooltip } from "@mui/material";
+import {
+  Autocomplete,
+  Button,
+  IconButton,
+  TextField,
+  Tooltip,
+} from "@mui/material";
 import "./style.css";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -8,6 +14,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useDispatch, useSelector } from "react-redux";
 import { AddmrngTaskThunk } from "../../../redux/thunk/Addmrngtask";
+import dayjs from "dayjs";
 
 function EmpTask() {
   const dispatch = useDispatch();
@@ -26,6 +33,24 @@ function EmpTask() {
       },
     ],
   };
+  const projectType = [
+    {
+      label: "EPub",
+      value: "epub",
+    },
+    {
+      label: "Web Pdf",
+      value: "webpdf",
+    },
+    {
+      label: "XML",
+      value: "xml",
+    },
+    {
+      label: "QC",
+      value: "qc",
+    },
+  ];
 
   const validation = Yup.object().shape({
     project: Yup.array().of(
@@ -36,9 +61,7 @@ function EmpTask() {
         project_title: Yup.string()
           .min(3, "Title must have at least 3 characters")
           .required("*This field is required"),
-        book_isbn: Yup.number()
-          .typeError("*Must be a number")
-          .required("*This field is required"),
+        book_isbn: Yup.string().required("*This field is required"),
         total_pages: Yup.number()
           .typeError("*Must be a number")
           .required("*This field is required"),
@@ -82,7 +105,6 @@ function EmpTask() {
 
     formik.setFieldValue("project", [...formik.values.project, newProject]);
   };
-
   const handleDeleteRow = (index) => {
     const updatedProjects = [...formik.values.project];
     updatedProjects.splice(index, 1); // remove 1 item at that index
@@ -97,24 +119,40 @@ function EmpTask() {
           formik?.values?.project?.map((data, index) => (
             <div className="task-form row row-gap-2">
               <div className="col-lg-2 col-md-6 col-sm-12 ">
-                <TextField
-                  label="Project Type"
-                  name={`project[${index}].project_type`}
-                  className="my-2"
-                  variant="outlined"
-                  size="small"
-                  value={formik.values?.project[index]?.project_type || ""}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={
-                    formik.touched.project?.[index]?.project_type &&
-                    Boolean(formik.errors.project?.[index]?.project_type)
+                <Autocomplete
+                  options={projectType}
+                  getOptionLabel={(option) => option?.label || ""}
+                  value={
+                    projectType.find(
+                      (type) =>
+                        type.value ===
+                        formik.values.project?.[index]?.project_type
+                    ) || null
                   }
-                  helperText={
-                    formik.touched.project?.[index]?.project_type &&
-                    formik.errors.project?.[index]?.project_type &&
-                    formik.errors.project?.[index]?.project_type
-                  }
+                  onChange={(event, newValue) => {
+                    formik.setFieldValue(
+                      `project[${index}].project_type`,
+                      newValue?.value || ""
+                    );
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      name={`project[${index}].project_type`}
+                      label="Project Type"
+                      size="small"
+                      className="my-2"
+                      fullWidth
+                      error={
+                        formik.touched.project?.[index]?.project_type &&
+                        Boolean(formik.errors.project?.[index]?.project_type)
+                      }
+                      helperText={
+                        formik.touched.project?.[index]?.project_type &&
+                        formik.errors.project?.[index]?.project_type
+                      }
+                    />
+                  )}
                 />
               </div>
               <div className="col-lg-3 col-md-6 col-sm-12">
@@ -191,7 +229,7 @@ function EmpTask() {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  value={formik.values.project?.[index]?.target_pages || null}
+                  value={formik.values.project?.[index]?.target_pages || ""}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={
@@ -210,11 +248,14 @@ function EmpTask() {
                   <DatePicker
                     label="Start date"
                     size="small"
-                    value={formik.values.project?.[index]?.start_date || null}
+                    value={
+                      dayjs(formik.values.project?.[index]?.start_date) || null
+                    }
                     onChange={(newValue) => {
+                      const Date = dayjs(newValue).format("YYYY-MM-DD");
                       formik.setFieldValue(
                         `project[${index}].start_date`,
-                        newValue
+                        Date
                       );
                     }}
                     onBlur={formik.handleBlur}
@@ -239,12 +280,12 @@ function EmpTask() {
                   <DatePicker
                     label="Due date"
                     size="small"
-                    value={formik.values.project?.[index]?.due_date || null}
+                    value={
+                      dayjs(formik.values.project?.[index]?.due_date) || null
+                    }
                     onChange={(newValue) => {
-                      formik.setFieldValue(
-                        `project[${index}].due_date`,
-                        newValue
-                      );
+                      const Date = dayjs(newValue).format("YYYY-MM-DD");
+                      formik.setFieldValue(`project[${index}].due_date`, Date);
                     }}
                     onBlur={formik.handleBlur}
                     slotProps={{
@@ -315,9 +356,9 @@ function EmpTask() {
               color: "#fff",
               fontWeight: "500",
             }}
-            loading={loading ? true : false}
+            disabled={loading ? true : false}
           >
-            SUBMIT PLAN
+            {loading ? "Loading..." : "SUBMIT PLAN"}
           </Button>
         </div>
       </form>

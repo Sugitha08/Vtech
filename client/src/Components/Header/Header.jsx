@@ -1,13 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./Header.css";
 import { RxAvatar } from "react-icons/rx";
 import { Menu, MenuItem } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
 import { LogoutThunk } from "../../redux/thunk/LogoutThunk";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
-function Header({ children }) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+function Header({ children, handleProfileClick }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const { loading } = useSelector((state) => state.Logout);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const open = Boolean(anchorEl);
@@ -23,14 +24,11 @@ function Header({ children }) {
       .toLocaleString("sv-SE", {
         timeZone: "Asia/Kolkata",
       })
-      .replace(" ", "T"); // Converts "2025-07-28 10:40:12" to "2025-07-28T10:40:12"
+      .replace(" ", "T");
 
     const payload = {
       checkOut: isoFormat,
     };
-
-    console.log(payload);
-    
     dispatch(LogoutThunk(payload))
       .unwrap()
       .then(() => navigate("/"))
@@ -64,8 +62,17 @@ function Header({ children }) {
               },
             }}
           >
-            <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleProfileClick();
+                handleMenuClose();
+              }}
+            >
+              Profile
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              {loading ? "loading" : "Logout"}
+            </MenuItem>
           </Menu>
         </div>
       </div>

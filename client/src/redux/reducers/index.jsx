@@ -8,18 +8,22 @@ import AttendanceReducer from "./EmpReducer/AttendanceReducer";
 import EmpProgressReducer from "./EmpReducer/EmpProgressReducer";
 import EmployeeReducer from "./EmpReducer/EmployeeReducer";
 import AssignTaskReducer from "./EmpReducer/AssigntaskReducer";
+import ProjectReducer from "./EmpReducer/ProjectReducer";
+import EmpPerformanceReducer from "./EmpReducer/EmpPerformanceReducer";
 
 const RootReducer = combineReducers({
   Login: LoginReducer,
   Logout: LogoutReducer,
   Register: RegisterReducer,
- 
-  Employee:EmployeeReducer,
+
+  Employee: EmployeeReducer,
   MorningTask: AddmrngTaskReducer,
   EveningTask: AddevngTaskReducer,
   EmpAttendance: AttendanceReducer,
   EmpProgress: EmpProgressReducer,
   AssignTask: AssignTaskReducer,
+  Project: ProjectReducer,
+  Performance: EmpPerformanceReducer,
 });
 
 export default RootReducer;

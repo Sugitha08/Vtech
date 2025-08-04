@@ -1,6 +1,6 @@
 from flask import Flask , Blueprint
 from app.config import Config
-from app.extension import db, jwt, migrate, limiter, cors 
+from app.extension import db, jwt, migrate, limiter, cors,mail
 from app.routes import auth , admin , spradmin , employee
 from flask_cors import CORS
 
@@ -12,7 +12,8 @@ def create_app():
     migrate.init_app(app, db)
     limiter.init_app(app)
     cors.init_app(app)
-    CORS(app, supports_credentials=True)
+    mail.init_app(app)
+    CORS(app, supports_credentials=True , origins="https://vtech-erp-efc2c.web.app")
 
     app.register_blueprint(auth, url_prefix='/auth')
     app.register_blueprint(admin, url_prefix='/admin')
